@@ -39,21 +39,10 @@ describe("TrustlessEscrow", function () {
     );
     let _beneficiaryHash = ethers.keccak256(encodedMessage);
     console.log({_beneficiaryHash})
-    // let mintSignMsg = await seller.signMessage(ethers.utils.arrayify(mintmessageHash));
-    // let splitMintSig = ethers.utils.splitSignature(mintSignMsg);
-    // let sellerSign= [splitMintSig.v, splitMintSig.r, splitMintSig.s, nonce];
-    
 
-    // depositer deposit ETH funds to beneficiary.address
-    // depositorBalance = await getBalance()
     tx = await trustlessEscrow.connect(depositor).depositFunds("0x0000000000000000000000000000000000000000", 1000000000, _beneficiaryHash, {"value":1000000000});
     await tx.wait();
     
-    //Execute Order
-
-    // Assertions
-
-    //expect(await usdc.balanceOf(user2.address)).to.be.eq(depositorBalance-1000000000);
   });
 
   it("releaseFunds", async function () {
@@ -62,7 +51,7 @@ describe("TrustlessEscrow", function () {
     
     const escrowAddr = await trustlessEscrow.getAddress()
     const depositerAddr = await depositor.getAddress()
-    const benAddr = await depositor.getAddress()
+    const benAddr = await beneficiary.getAddress()
     console.log({
       escrowAddr,
       depositerAddr,
@@ -72,27 +61,26 @@ describe("TrustlessEscrow", function () {
     //beneficiary Address Hash
 
     const abiCoder = new ethers.AbiCoder();
+    const encodedAddr = abiCoder.encode(
+      ["address"],
+      [benAddr]
+    );
+    const _beneficiaryHash = ethers.keccak256(encodedAddr);
+    console.log({_beneficiaryHash})
+
+    tx = await trustlessEscrow.connect(depositor).depositFunds("0x0000000000000000000000000000000000000000", 1000000000, _beneficiaryHash, {"value":1000000000});
+    await tx.wait();
+
+
     const encodedMessage = abiCoder.encode(
       ["uint256", "address", "address"],
       [0, benAddr,escrowAddr]
     );
-    let _msgHash = ethers.keccak256(encodedMessage);
+    const _msgHash = ethers.keccak256(encodedMessage);
     console.log({_msgHash})
-    let beneficiaryHash = await beneficiary.signMessage(ethers.arrayify(_msgHash));
-    // let splitMintSig = ethers.utils.splitSignature(mintSignMsg);
-    // let sellerSign= [splitMintSig.v, splitMintSig.r, splitMintSig.s, nonce];
-    
-
-    // depositer deposit ETH funds to beneficiary.address
-    // depositorBalance = await getBalance()
-    tx = await trustlessEscrow.connect(owner).releaseFunds(0, beneficiary, beneficiaryHash);
+    const beneficiarySignatue = await beneficiary.signMessage(ethers.getBytes(_msgHash));
+    tx = await trustlessEscrow.connect(owner).releaseFunds(0, benAddr, beneficiarySignatue);
     await tx.wait();
-    
-    //Execute Order
-
-    // Assertions
-
-    //expect(await usdc.balanceOf(user2.address)).to.be.eq(depositorBalance-1000000000);
   });
 
 });

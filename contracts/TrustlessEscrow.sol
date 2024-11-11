@@ -70,12 +70,12 @@ contract TrustlessEscrow {
 
         require(!deposit.isReleased, "Funds already released");
         require(
-            deposit.beneficiaryHash == keccak256(abi.encodePacked(_beneficiary)),
+            deposit.beneficiaryHash == keccak256(abi.encode(_beneficiary)),
             "Invalid beneficiary address"
         );
 
         // Construct the message hash and recover the signer's address
-        bytes32 messageHash = keccak256(abi.encodePacked(_depositId, _beneficiary, address(this)));
+        bytes32 messageHash = keccak256(abi.encode(_depositId, _beneficiary, address(this)));
         bytes32 ethSignedMessageHash = signMessageHash(messageHash);
         require(ECDSA.recover(ethSignedMessageHash, _signature) == _beneficiary, "Invalid signature");
 
