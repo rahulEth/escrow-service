@@ -13,20 +13,22 @@ contract TrustlessEscrow {
         uint256 amount;
         address token; // Address(0) indicates ETH
         bytes32 beneficiaryHash;
+        address beneficiary;
         bool isReleased;
     }
 
     mapping(uint256 => Deposit) public deposits; // Mapping of depositId to Deposit
     uint256 public depositCount;
 
-    event Deposited(
-        uint256 indexed depositId,
-        address indexed depositor,
-        uint256 amount,
-        address token,
-        bytes32 beneficiaryHash
-    );
-    event Released(uint256 indexed depositId, address indexed beneficiary);
+        event Deposited(
+            uint256 indexed depositId,
+            address indexed depositor,
+            uint256 amount,
+            address token,
+            address beneficiary,
+            bytes32 beneficiaryHash
+        );
+    event Released(uint256 indexed depositId, address indexed beneficiary,address indexed transferTo);
 
     /**
      * @notice Deposit ETH or ERC20 token with a hashed beneficiary address.
@@ -52,20 +54,21 @@ contract TrustlessEscrow {
             amount: _amount,
             token: _token,
             beneficiaryHash: _beneficiaryHash,
+            beneficiary: address(0),   
             isReleased: false
         });
 
-        emit Deposited(depositCount, msg.sender, _amount, _token, _beneficiaryHash);
+        emit Deposited(depositCount, msg.sender, _amount, _token, address(0), _beneficiaryHash);
         depositCount++;
     }
 
     /**
-     * @notice Release funds to the beneficiary if they provide a valid signature.
+     * @notice Release funds to the transferTo if they provide a valid signature.
      * @param _depositId The ID of the deposit.
      * @param _beneficiary The actual beneficiary address.
      * @param _signature The off-chain signature from the beneficiary to authorize release.
      */
-    function releaseFunds(uint256 _depositId, address _beneficiary, bytes memory _signature) external {
+    function releaseFunds(uint256 _depositId, address _beneficiary, address _transferTo, bytes memory _signature) external {
         Deposit memory deposit = deposits[_depositId];
 
         require(!deposit.isReleased, "Funds already released");
@@ -75,19 +78,20 @@ contract TrustlessEscrow {
         );
 
         // Construct the message hash and recover the signer's address
-        bytes32 messageHash = keccak256(abi.encode(_depositId, _beneficiary, address(this)));
+        bytes32 messageHash = keccak256(abi.encode(_depositId, _beneficiary, _transferTo, address(this)));
         bytes32 ethSignedMessageHash = signMessageHash(messageHash);
         require(ECDSA.recover(ethSignedMessageHash, _signature) == _beneficiary, "Invalid signature");
 
         // Mark deposit as released and send funds
         deposit.isReleased = true;
+        deposit.beneficiary = _beneficiary;
         if (deposit.token == address(0)) {
-            payable(_beneficiary).transfer(deposit.amount); // Transfer ETH
+            payable(_transferTo).transfer(deposit.amount); // Transfer ETH
         } else {
-            IERC20(deposit.token).transfer(_beneficiary, deposit.amount); // Transfer ERC20 tokens
+            IERC20(deposit.token).transfer(_transferTo, deposit.amount); // Transfer ERC20 tokens
         }
 
-        emit Released(_depositId, _beneficiary);
+        emit Released(_depositId, _beneficiary, _transferTo);
     }
 
 
