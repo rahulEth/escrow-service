@@ -3,8 +3,10 @@ require('dotenv').config()
 
 // https://base-mainnet.g.alchemy.com/v2/9Gt8lpwu_WelXSIE83OLYtiB0Smb3CWS
 // sapolia
-const META_MASK_PRIVATE_KEY= process.env.APP_PRIVATE_KEY;
+const META_MASK_PRIVATE_KEY= process.env.META_MASK_PRIVATE_KEY;
 const INFURA_API_KEY= process.env.INFURA_API_KEY;
+
+console.log({META_MASK_PRIVATE_KEY, INFURA_API_KEY})
 
 /** @type import('hardhat/config').HardhatUserConfig */
 module.exports = {

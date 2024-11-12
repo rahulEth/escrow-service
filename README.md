@@ -1,7 +1,7 @@
 # TrustlessEscrow Hardhat Project
 
 This project demonstrates an blockchain based escrow sevice where depositer can trasfer
-funds for benificiary. The beneficiary signs the release funds order off-chain and any address can submit it to the chain.
+funds for benificiary. The depositor sends an arbitrary ERC20 or ETH to the smart contract and provides information about the beneficiary address which can release the funds. The beneficiary address should remain hidden until the funds are released The beneficiary signs the release funds order off-chain and any address can submit it to the chain. The funds would be released to the address provided by the beneficiary.
 
 
 ## testing the contract

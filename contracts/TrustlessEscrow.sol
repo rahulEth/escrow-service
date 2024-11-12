@@ -3,8 +3,9 @@ pragma solidity ^0.8.25;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
-contract TrustlessEscrow {
+contract TrustlessEscrow is ReentrancyGuard{
     using ECDSA for bytes32;
 
     // Struct to store deposit information
@@ -68,7 +69,7 @@ contract TrustlessEscrow {
      * @param _beneficiary The actual beneficiary address.
      * @param _signature The off-chain signature from the beneficiary to authorize release.
      */
-    function releaseFunds(uint256 _depositId, address _beneficiary, address _transferTo, bytes memory _signature) external {
+    function releaseFunds(uint256 _depositId, address _beneficiary, address _transferTo, bytes memory _signature) external nonReentrant() {
         Deposit memory deposit = deposits[_depositId];
 
         require(!deposit.isReleased, "Funds already released");
@@ -88,7 +89,7 @@ contract TrustlessEscrow {
         if (deposit.token == address(0)) {
             payable(_transferTo).transfer(deposit.amount); // Transfer ETH
         } else {
-            IERC20(deposit.token).transfer(_transferTo, deposit.amount); // Transfer ERC20 tokens
+            require(IERC20(deposit.token).transfer(_transferTo, deposit.amount), "erro while transfering erc20 token"); // Transfer ERC20 tokens
         }
 
         emit Released(_depositId, _beneficiary, _transferTo);
